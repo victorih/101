@@ -1,0 +1,207 @@
+
+$(document).ready(function(){  
+	sizing(); 
+	$('#galleryTabs span').click(function(){
+		var data=$(this).attr("data") ;
+		$('#galleryList').attr("data-type",data) ;
+		$('#galleryTabs span').removeClass("on") ;
+		$(this).addClass("on") ;
+		listLoad (1) ;
+	});
+	$("#my_hug_101 span.x").click(function(){
+		$("#my_hug_101 , .opacity").fadeOut(500);  
+	}); 
+	$("#my_hug_result p>a").click(function(e){
+		e.preventDefault();
+		$("#my_hug_result , .onlayer , #my_hug_101 , .opacity").fadeOut(500);  
+	}); 
+	$("#galleryView p.p img").on("click" , function(){  
+		 $("#galleryView span.x").trigger("click") ;
+	});
+	$("#galleryView span").on("click" , function(){ // 갤러리 PREV , NEXT
+		var $gList = $('#galleryList') ;
+		var $gView = $('#galleryView') ;
+		var skip=$(this).attr("class") ;
+		if ( skip == "x" ){
+			$gView.hide();
+			$(".opacity").hide() ;
+			$gView.find("p.v").find('video').attr("src","") ;
+			$gView.find("p.p").find('img').attr("src","") ;
+			return;
+		}
+		var mIdx =  $gList.attr('data-idx') ; 
+		var type =  $gList.attr('data-type') ; 
+		if (type == "PHOTO") {
+			var $idxTg = $gView.find("p.p").find('img') ;
+		} else if (type == "VIDEO") {
+			var $idxTg = $gView.find("p.v").find('video') ;
+		}
+		var iIdx = $idxTg.attr('data-idx') ;
+		if ( skip == "prev") {
+			$('span.next').show() ;
+		} else if ( skip == "next") {
+			$('span.prev').show() ;
+		}
+		var lastSet ='N'; 
+		var loadhtml="" ; 
+		var list_url = 'm101_gallery.php?skip='+skip+'&iIdx='+iIdx+'&mIdx='+mIdx+'&type='+type ; 
+		
+		$idxTg.fadeOut(200) ;
+		$.ajax({
+		  type:"GET",
+		  url: list_url ,
+		  dataType: 'json',  
+		  success: function (data) {  
+		  		if (data.last=='Y') { lastSet = 'Y' ; }
+		  		$idxTg.attr("src",data.image).attr("data-idx",data.idx) ;
+		  		$idxTg.fadeIn(200) ;
+				if (lastSet=='Y' && skip == "prev") {
+					$('span.prev').hide() ;
+				} else if (lastSet=='Y' && skip == "next") {
+					$('span.next').hide() ;
+				}
+		  		
+		  },
+		  error: function()  { 
+			console.log ('error');
+		  }
+		}).done(function(){
+		});
+	}); // ------------- 갤러리 PREV , NEXT
+	$('#cTest li label').on('click',function(){ // 케미테스트 
+		var $parent = $(this).parent("li") ;
+		var attrid = "#" + $(this).attr("for") ; 
+		var nextli = $parent.index('#cTest li')+1;
+		$parent.find("label").removeClass("on") ;
+		$(this).addClass("on") ;
+		$parent.addClass("on") ;
+		$(attrid).trigger('click') ;
+		$('#cTest li').eq(nextli).find('aside').hide(150);
+	});
+}); 
+$(window).resize(function(){
+	sizing();
+});
+$(window).load(function(){
+});
+  
+function listLoad(page){
+	var $gList = $('#galleryList') ;
+	var idx = $gList.attr('data-idx') ;
+	var type = $gList.attr('data-type') ;
+	$gList.load("m101_gallery.php?idx="+idx+"&type="+type+"&page="+page) ;
+} 
+function sizing(){
+	var bodyH = $(window).height() ; 
+	var bodyW = $('#Frame').width() ; 
+	var gnbH = $('#gnb').height() ;  
+	$('#gnb aside').height($('p.home img').height());
+	$('#mList').height(bodyW) ;
+}
+	function dayhug(c,i) {   
+		var userId = "" ; 
+		if (c == "dayhug") {
+			FB.login(function(response) {
+			   if (response.status === 'connected') {
+					FB.api('/me', function(response) {
+						var data = {};
+						data["fb_id"] = response.id;
+						data["mem_id"] = i;
+				
+						$.post( "./proc/check_proc.php" , data, function(response)
+						{
+							if (response)
+							{ 
+								switch(response.result)
+								{
+									case "connected":	
+									proc.location.href = response.url ; 
+								}
+							}
+						}, "JSON"); //$.post
+					});// 	FB.api
+				} else {console.log('connect error'); }
+			});
+			return ;
+		} else if (c=="finish") {
+			$("#my_hug_result , .onlayer").show();
+			return ;
+		}  
+  
+	}	
+	
+	function dayhug_share(sns , i){ // 마보이  공유 sns
+		if (sns == "chemi") { 
+			fbChemi(i) ;
+		} else if (sns == "vote") { 
+			fbSupport(i) ;
+		}
+	} 
+var surlW = "https://goo.gl/5qFhwW" ;
+var surlM = "https://101maboy.com/" ;
+var stext = "101 마보이에게 꿈의 데뷔 무대를 안겨주세요! ☞ " ;
+var simg = "https://101maboy.com/images/share.png" ; 
+var surl = "https://101maboy.com/share.php" ; 
+	
+function fbShare() {  
+	var msg = ""; 
+	var desc = "" ;   
+		FB.ui(
+		  {
+			display: 'popup',
+			method: 'share',
+			title : "[Mnet 프로듀스 101 시즌2]"  ,  
+			picture : simg, 
+			description : stext + surl  ,  
+			href : surl 
+		  }, function(response){} 
+		);
+}
+	
+function fbChemi(img) { //케미테스트
+	var msg = ""; 
+	var desc = "" ;
+	var simg = "https://101maboy.com" + img ;   
+		FB.ui(
+		  {
+			display: 'popup',
+			method: 'share',
+			title : "[Mnet 프로듀스 101 시즌2 101 마보이 뽑기]"  ,  
+			picture : simg, 
+			description : "101 마보이의 11문 11답! 11가지 테스트를 통해 당신과 가장 케미 돋는 101 마보이를 찾아보세요 ☞ https://goo.gl/5qFhwW"   ,  
+			href : surl 
+		  }, function(response){} 
+		);
+}
+function fbSupport(img) { //후원 
+	var msg = ""; 
+	var desc = "" ;
+	var simg = "https://101maboy.com" + img ;   
+		FB.ui(
+		  {
+			display: 'popup',
+			method: 'share',
+			title : "[Mnet 프로듀스 101 시즌2 101 마보이 후원하기]"  ,  
+			picture : simg,
+			description : "지금 바로 101 마보이에게 당신의 마음을 전해주세요. 당신의 101 마보이를 빛내줄 선물이 전달 됩니다 ☞ https://goo.gl/5qFhwW"  ,  
+			href : surl 
+		  }, function(response){} 
+		);
+} 
+var sendUrl; 
+ 
+function openNewsWin(openUrl) {
+  var winObj;
+  winObj = window.open(openUrl,"sendNewsWin","width=800, height=500, scrollbars=yes");
+}
+
+function isMobile() {
+	var filter = "win16|win32|win64|mac|macintel";
+	if( navigator.platform  ){
+		if( filter.indexOf(navigator.platform.toLowerCase())<0 ){
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
